@@ -1,22 +1,6 @@
 ---
 - hosts: localhost
   gather_facts: no
-  vars:
-    engine_url: "https://rhvm.lab.example.com/ovirt-engine/api"
-    engine_user: "admin@internal"
-    engine_password: "redhat"
-    wait_for_ip_version: v4
-    vm_name: CREDITO
-    txt_num_tk: "IM00001"
-    txt_who_request: "Usuario1"
-    txt_numbers_vms: 1
-    txt_ips_addrs: "192.168.200.100"
-    dd_prefix: 24
-    txt_defgw: "192.168.200.1"
-    dd_memory: "1GiB"
-    dpb_cores: 1
-    dd_template: "rhel_7.6_template"
-    vnet_name: "vNetAdmin"
 
   tasks:
     - name: Login to oVirt
