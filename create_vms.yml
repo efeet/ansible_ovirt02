@@ -1,8 +1,11 @@
 ---
-- name: Clear Variables
-  set_fact:
-    rhvhost:
-    storage_domain:
+- name: Clear Variables01
+  meta: clear_facts
+  when: rhvhost is defined
+
+- name: Clear Variables02
+  meta: clear_facts
+  when: storage_domain is defined
     
 - name: Execute script to get Hypervisor with more Free Mem.
   local_action: script /tmp/get_info_api.bash
