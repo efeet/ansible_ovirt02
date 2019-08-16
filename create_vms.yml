@@ -2,14 +2,6 @@
 - name: Execute script to get Hypervisor with more Free Mem.
   local_action: script /tmp/get_info_api.bash
 
-- name: Fill Hyervisor var with result script execution.
-  set_fact: 
-    rhvhost: "{{ lookup('file', '/tmp/best_hypervisor.yml') }}" 
-
-- name: Fill Storage Domain var with result script execution.
-  set_fact: 
-    storage_domain: "{{ lookup('file', '/tmp/best_storage.yml') }}" 
-
 - name: "Create VM {{ current_vm.name }}"
   ovirt_vm:
     auth: "{{ ovirt_auth }}"
@@ -17,8 +9,8 @@
     name: "{{ current_vm.name }}"
     clone: true
     cluster: CL_CLIENT
-    host: "{{ rhvhost }}"
-    storage_domain: "{{ storage_domain }}"
+    host: "{{ lookup('file', '/tmp/best_hypervisor.yml') }}"
+    storage_domain: "{{ lookup('file', '/tmp/best_storage.yml') }}"
     template: "{{ current_vm.template }}"
     memory: "{{ current_vm.memory }}"
     memory_max: "{{ current_vm.memory }}"
