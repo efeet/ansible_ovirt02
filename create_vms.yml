@@ -1,4 +1,9 @@
 ---
+- name: Clear Variables
+  set_fact:
+    rhvhost:
+    storage_domain:
+    
 - name: Execute script to get Hypervisor with more Free Mem.
   local_action: script /tmp/get_info_api.bash
 
