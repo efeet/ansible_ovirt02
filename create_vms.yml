@@ -1,10 +1,4 @@
----
-- debug: var=rhvhost
-  when: rhvhost|default(None) != None
-
-- debug: var=storage_domain
-  when: storage_domain|default(None) != None
-    
+--- 
 - name: Execute script to get Hypervisor with more Free Mem.
   local_action: script /tmp/get_info_api.bash
 
