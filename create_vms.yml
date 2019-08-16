@@ -17,8 +17,8 @@
     name: "{{ current_vm.name }}"
     clone: true
     cluster: CL_CLIENT
-    #host: "{{ rhvhost }}"
-    #storage_domain: "{{ storage_domain }}"
+    host: "{{ rhvhost }}"
+    storage_domain: "{{ storage_domain }}"
     template: "{{ current_vm.template }}"
     memory: "{{ current_vm.memory }}"
     memory_max: "{{ current_vm.memory }}"
