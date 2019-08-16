@@ -9,10 +9,12 @@
   local_action: script /tmp/get_info_api.bash
 
 - name: Fill Hyervisor var with result script execution.
-  include_vars: /tmp/best_hypervisor.yml
+  set_fact: 
+    rhvhost: "{{ lookup('file', '/tmp/best_hypervisor.yml') }}" 
 
 - name: Fill Storage Domain var with result script execution.
-  include_vars: /tmp/best_storage.yml
+  set_fact: 
+    storage_domain: "{{ lookup('file', '/tmp/best_storage.yml') }}" 
 
 - name: "Create VM {{ current_vm.name }}"
   ovirt_vm:
