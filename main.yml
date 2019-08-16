@@ -19,8 +19,8 @@
         vms:
           name: "{{ vm_name }}0{{ item }}"
           template: "{{ dd_template }}"
-          memory: "{{ dd_memory | default('!!null')  }}"
-          cores: "{{ dpb_cores | default('!!null') }}"
+          memory: "{{ dd_memory }}"
+          cores: "{{ dpb_cores }}"
           comment: "Requerimiento: {{ txt_num_tk }} - Solicitante: {{ txt_who_request }}"
           vnet: "{{ vnet_name }}"
           ipaddr: "{{ txt_ips_addrs.split(',')[item - 1] }}"
