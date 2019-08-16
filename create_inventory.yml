@@ -1,0 +1,20 @@
+---
+- name: Fetch created VMs - 1
+  ovirt_vm_facts:
+    auth: "{{ ovirt_auth }}"
+    pattern: "name=*"
+    fetch_nested: true
+    nested_attributes:
+      - ips
+      - name
+
+- name: Create inventory of VMs IPv4 - 2
+  add_host:
+    name: "{{ item.name }}"
+    #ipaddr_info: "{{ item.reported_devices[0].ips[0].address }}"
+    #groups: "{{ (['ovirt_tag_'] * item.tags | length) | zip(item.tags | map(attribute='name') | list) | map('join') | list + ['ovirt_vm'] }}"
+  with_items: "{{ ovirt_vms }}"
+  changed_when: false
+  when: "wait_for_ip_version == 'v4'"
+  loop_control:
+    label: "{{ item.name }}"

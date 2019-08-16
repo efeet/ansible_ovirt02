@@ -1,0 +1,61 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    engine_url: "https://rhvm.lab.example.com/ovirt-engine/api"
+    engine_user: "admin@internal"
+    engine_password: "redhat"
+    wait_for_ip_version: v4
+    vm_name: CREDITO
+    txt_num_tk: "IM00001"
+    txt_who_request: "Usuario1"
+    txt_numbers_vms: 1
+    txt_ips_addrs: "192.168.200.100"
+    dd_prefix: 24
+    txt_defgw: "192.168.200.1"
+    dd_memory: "1GiB"
+    dpb_cores: 1
+    dd_template: "rhel_7.6_template"
+    vnet_name: "vNetAdmin"
+
+  tasks:
+    - name: Login to oVirt
+      ovirt_auth:
+        url: "{{ engine_url | default(lookup('env','OVIRT_URL')) | default(omit) }}"
+        hostname: "{{ engine_fqdn | default(lookup('env','OVIRT_HOSTNAME')) | default(omit) }}"
+        username: "{{ engine_user | default(lookup('env','OVIRT_USERNAME')) | default(omit) }}"
+        password: "{{ engine_password | default(lookup('env','OVIRT_PASSWORD')) | default(omit) }}"
+        ca_file: "{{ engine_cafile | default(lookup('env','OVIRT_CAFILE')) | default(omit) }}"
+        insecure: "{{ engine_insecure | default(true) }}"
+      when: ovirt_auth is undefined or not ovirt_auth
+      register: loggedin
+
+    - name: Generate VMs info
+      set_fact: 
+        vms:
+          name: "{{ vm_name }}0{{ item }}"
+          template: "{{ dd_template }}"
+          memory: "{{ dd_memory }}"
+          cores: "{{ dpb_cores }}"
+          comment: "Requerimiento: {{ txt_num_tk }} - Solicitante: {{ txt_who_request }}"
+          vnet: "{{ vnet_name }}"
+          ipaddr: "{{ txt_ips_addrs.split(',')[item - 1] }}"
+          prefix: "{{ dd_prefix }}"
+          defgw: "{{ txt_defgw }}" 
+      with_items: "{{ range(1, txt_numbers_vms + 1) | list }}"
+      register: tmp_vms
+
+    - name: Split list of VMs
+      set_fact: 
+        create_vms: "{{ create_vms|default([]) + [ { 'name': item.ansible_facts.vms.name, 'template': item.ansible_facts.vms.template, 'memory': item.ansible_facts.vms.memory, 'cores': item.ansible_facts.vms.cores, 'comment': item.ansible_facts.vms.comment, 'vnet': item.ansible_facts.vms.vnet, 'ipaddr': item.ansible_facts.vms.ipaddr, 'prefix': item.ansible_facts.vms.prefix, 'defgw': item.ansible_facts.vms.defgw } ] }}"
+      with_items: "{{ tmp_vms.results }}"
+
+    - name: Create VMs
+      include_tasks: vm_state_running.yml
+      when: create_vms is defined
+    
+    - name: Logout from oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth }}"
+      when: not loggedin.skipped | default(false)
