@@ -103,7 +103,7 @@ function _get_storage_info {
 			storage_list[$stdom,3]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/comment/text()' | sed 's/ //g' | tr '[:upper:]' '[:lower:]' | awk -F'tier' '{ print $NF '} | cut -c1 )
 			if ! [[ ${storage_list[$stdom,3]} =~ ^[0-9]+$ ]]
 			then
-				echo "ERROR: El Tier del Almacenamiento no es correcto. -> ${storage_list[$stdom,3]}"
+				echo "ERROR: El Tier del Almacenamiento no es correcto. -> ${storage_list[$stdom,0]}"
 				exit 1
 			fi
 		fi
