@@ -46,12 +46,19 @@
       #with_items: "{{ range(1, txt_numbers_vms + 1) | list }}"
       with_sequence: start=1 end={{ txt_numbers_vms }} format=%02d
       when: txt_numbers_vms == 1
-      register: tmp_vms
+      register: tmp_one_vm
 
     - name: Split list of VMs
       set_fact: 
         create_vms: "{{ create_vms | default([]) + [ { 'name': item.ansible_facts.vms.name, 'template': item.ansible_facts.vms.template, 'memory': item.ansible_facts.vms.memory, 'cores': item.ansible_facts.vms.cores, 'comment': item.ansible_facts.vms.comment, 'vnet': item.ansible_facts.vms.vnet, 'ipaddr': item.ansible_facts.vms.ipaddr, 'prefix': item.ansible_facts.vms.prefix, 'defgw': item.ansible_facts.vms.defgw } ] }}"
       with_items: "{{ tmp_vms.results }}"
+      when: txt_numbers_vms > 1
+
+    - name: Split list of VM
+      set_fact: 
+        create_vms: "{{ create_vms | default([]) + [ { 'name': item.ansible_facts.vms.name, 'template': item.ansible_facts.vms.template, 'memory': item.ansible_facts.vms.memory, 'cores': item.ansible_facts.vms.cores, 'comment': item.ansible_facts.vms.comment, 'vnet': item.ansible_facts.vms.vnet, 'ipaddr': item.ansible_facts.vms.ipaddr, 'prefix': item.ansible_facts.vms.prefix, 'defgw': item.ansible_facts.vms.defgw } ] }}"
+      with_items: "{{ tmp_one_vm.results }}"
+      when: txt_numbers_vms == 1
 
     - name: Create VMs
       include_tasks: vm_state_running.yml
