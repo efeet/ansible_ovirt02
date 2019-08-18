@@ -23,7 +23,7 @@
           cores: "{{ dpb_cores }}"
           comment: "Requerimiento: {{ txt_num_tk }} - Solicitante: {{ txt_who_request }}"
           vnet: "{{ vnet_name }}"
-          ipaddr: "{{ txt_ips_addrs.split(',')[item - 1] }}"
+          ipaddr: "{{ txt_ips_addrs.split(',')[item | int - 1] }}"
           prefix: "{{ dd_prefix }}"
           defgw: "{{ txt_defgw }}" 
       with_sequence: start=1 end={{ txt_numbers_vms }} format=%02d
