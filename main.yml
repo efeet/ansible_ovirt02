@@ -46,6 +46,7 @@
       #with_items: "{{ range(1, txt_numbers_vms + 1) | list }}"
       with_sequence: start=1 end={{ txt_numbers_vms }} format=%02d
       when: txt_numbers_vms == 1
+      register: tmp_vms
 
     - name: Split list of VMs
       set_fact: 
