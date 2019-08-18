@@ -17,7 +17,7 @@
     - name: Generate VMs info
       set_fact: 
         vms:
-          name: "{{ vm_name }}0{{ item }}"
+          name: "{{ vm_name }}{{ item }}"
           template: "{{ dd_template }}"
           memory: "{{ dd_memory }}"
           cores: "{{ dpb_cores }}"
@@ -26,7 +26,7 @@
           ipaddr: "{{ txt_ips_addrs.split(',')[item - 1] }}"
           prefix: "{{ dd_prefix }}"
           defgw: "{{ txt_defgw }}" 
-      with_items: "{{ range(1, txt_numbers_vms + 1) | list }}"
+      with_sequence: start=1 end={{ txt_numbers_vms }} format=%02d
       register: tmp_vms
 
     - name: Split list of VMs
