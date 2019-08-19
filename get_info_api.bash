@@ -82,8 +82,6 @@ function _get_href_and_name {
                         _get_apiservice "${hosts_list[$hosts,0]}" "${STAT_FILE}"
                         _get_hosts_stats $hosts
                 else
-                        hosts_list[$hosts,0]=0
-                        hosts_list[$hosts,1]=0
                         hosts_list[$hosts,2]=0
                 fi
         done
