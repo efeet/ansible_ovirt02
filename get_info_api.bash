@@ -1,16 +1,16 @@
 #!/bin/bash
 
-ENGINE_URL="https://rhvm.lab.example.com/ovirt-engine"
-USER_NAME="admin@internal"
-USER_PASSW="redhat"
+ENGINE_URL="https://rhvmct01.lbu.tsys.local/ovirt-engine"
+USER_NAME="api_query_user@internal"
+USER_PASSW="rhvmTSMX2019"
 #CA_CERT_PATH=/root/RHVM_API_Lab/Ansible/apache-ca.pem
 
 HEADER_CONTENT_TYPE="Content-Type: application/xml"
 HEADER_ACCEPT="Accept: application/xml"
-COMM_FILE="/tmp/restapi_com.xml"
-STAT_FILE="/tmp/restapi_stat.xml"
-FILE_BEST_HOST="/tmp/best_hypervisor.yml"
-FILE_BEST_STORAGE="/tmp/best_storage.yml"
+COMM_FILE="/var/lib/awx/projects/RHV_VMs/rhv_vms_auto_resources/restapi_com.xml"
+STAT_FILE="/var/lib/awx/projects/RHV_VMs/rhv_vms_auto_resources/restapi_stat.xml"
+FILE_BEST_HOST="/var/lib/awx/projects/RHV_VMs/rhv_vms_auto_resources/best_hypervisor.yml"
+FILE_BEST_STORAGE="/var/lib/awx/projects/RHV_VMs/rhv_vms_auto_resources/best_storage.yml"
 BEST_PLACE=""
 BEST_MEMFREE=0
 BEST_STORAGE=""
@@ -39,6 +39,7 @@ function _fill_best_placement_memory {
 function _fill_best_placement_storage {
         for stdom in $(seq 1 $1)
         do
+                echo "Comparando: " ${storage_list[$stdom,0]}
                 if [  ${storage_list[$stdom,3]} == "1" ]
                 then
                         if [ ${storage_list[$stdom,1]} -gt $BEST_FREESTORAGE ]
@@ -71,18 +72,23 @@ function _get_href_and_name {
         count_host=$(xmllint "${COMM_FILE}" --xpath 'count(//hosts/host)')
         for hosts in $(seq 1 $count_host)
         do
-                
+
                 # Get Host URI
                 hosts_list[$hosts,0]=$(xmllint "${COMM_FILE}" --xpath '//hosts/host['$hosts']/@href' | sed 's/ href="\/ovirt-engine\([^"]*\)"/\1\n/g')
                 # Get Host Name
                 hosts_list[$hosts,1]=$(xmllint "${COMM_FILE}" --xpath '//hosts/host['$hosts']/name/text()')
-                if [ $( xmllint "${COMM_FILE}" --xpath '//hosts/host['$hosts']/status/text()' ) == "up" ]
+                if [ $( xmllint "${COMM_FILE}" --xpath 'string(//hosts/host['$hosts']/cluster/@id)') == "4e869d1b-1739-4380-a2af-f159ef1af860" ]
                 then
-                        # Call statistics function, arg: URI + FileOutput
-                        _get_apiservice "${hosts_list[$hosts,0]}" "${STAT_FILE}"
-                        _get_hosts_stats $hosts
+                    if [ $( xmllint "${COMM_FILE}" --xpath '//hosts/host['$hosts']/status/text()' ) == "up" ]
+                    then
+                            # Call statistics function, arg: URI + FileOutput
+                            _get_apiservice "${hosts_list[$hosts,0]}" "${STAT_FILE}"
+                            _get_hosts_stats $hosts
+                    else
+                            hosts_list[$hosts,2]=0
+                    fi
                 else
-                        hosts_list[$hosts,2]=0
+                    hosts_list[$hosts,2]=0
                 fi
         done
 
@@ -98,20 +104,29 @@ function _get_storage_info {
                 data_type=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/type/text()')
                 if [ $data_type = "data" ]
                 then
-                        count_fill=$(eval expr ${count_fill} + 1)
-                        # Get Storage Domain Name
-                        storage_list[$stdom,0]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/name/text()')
-                        # Get Storage Domain Available
-                        storage_list[$stdom,1]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/available/text()')
-                        # Get Storage Type
-                        storage_list[$stdom,2]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/type/text()')
-                        # Get Storage Comment to check Tier level
+                    count_fill=$(eval expr ${count_fill} + 1)
+                    # Get Storage Domain Name
+                    storage_list[$stdom,0]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/name/text()')
+                    # Get Storage Domain Available
+                    storage_list[$stdom,1]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/available/text()')
+                    # Get Storage Type
+                    storage_list[$stdom,2]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/type/text()')
+                    # Get Storage Comment to check Tier level
+                    if [[ ! $(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/comment/text()' | grep NoOrquestation ) ]]
+                    then
                         storage_list[$stdom,3]=$(xmllint "${COMM_FILE}" --xpath '//storage_domain['$stdom']/comment/text()' | sed 's/ //g' | tr '[:upper:]' '[:lower:]' | awk -F'tier' '{ print $NF '} | cut -c1 )
                         if ! [[ ${storage_list[$stdom,3]} =~ ^[0-9]+$ ]]
                         then
-                                echo "ERROR: El Tier del Almacenamiento no es correcto. -> ${storage_list[$stdom,0]}"
-                                exit 1
+                            echo "ERROR: El Tier del Almacenamiento no es correcto. -> ${storage_list[$stdom,0]}"
+                            exit 1
                         fi
+                    else
+                        storage_list[$stdom,3]=11
+                        storage_list[$stdom,1]=0
+                    fi
+                else
+                    storage_list[$stdom,3]=22
+                    storage_list[$stdom,1]=0
                 fi
         done
         _fill_best_placement_storage $count_fill
@@ -119,7 +134,7 @@ function _get_storage_info {
 
 _get_apiservice "/api/hosts" "${COMM_FILE}"
 _get_href_and_name
-_get_apiservice "/api/storagedomains" "${COMM_FILE}"
+_get_apiservice "/api/datacenters/8f998c0c-abd6-4b29-a619-523a8cc52c17/storagedomains" "${COMM_FILE}"
 _get_storage_info
 
 echo $BEST_MEMFREE
